@@ -10,10 +10,11 @@ import (
 const DIAL_START = 50
 const DIAL_THRESHOLD = 100
 
-func getDozens(value int) int {
+func getDozens(value int) (int, int) {
+	hundreds := value / 100
 	dozens := (value % 100)
 
-	return dozens
+	return dozens, hundreds
 }
 
 func open_file(fname string) ([]string, error) {
@@ -31,15 +32,16 @@ func open_file(fname string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-func rotation(instruction string, currentPoint int) int {
+func rotation(instruction string, currentPoint int) (int, int) {
 	direction := string(instruction[0])
 	rotation, err := strconv.Atoi(instruction[1:])
 	var newRotationValue int
+	turns := 0
 
 	if err == nil {
 
 		if rotation > DIAL_THRESHOLD {
-			rotation = getDozens(rotation)
+			rotation, turns = getDozens(rotation)
 		}
 
 		switch direction {
@@ -49,6 +51,7 @@ func rotation(instruction string, currentPoint int) int {
 			if workDial < 0 {
 
 				newRotationValue = DIAL_THRESHOLD - (workDial * -1)
+				turns += 1
 
 			} else {
 				newRotationValue = workDial
@@ -58,18 +61,19 @@ func rotation(instruction string, currentPoint int) int {
 			if workDial >= DIAL_THRESHOLD {
 
 				newRotationValue = workDial - DIAL_THRESHOLD
+				turns += 1
 
 			} else {
 				newRotationValue = workDial
 			}
 		default:
-			fmt.Fprintln(os.Stdout, "Wrong direction %v", direction)
+			fmt.Fprintln(os.Stdout, "Wrong direction: ", direction)
 
 		}
 
 	}
 
-	return newRotationValue
+	return newRotationValue, turns
 
 }
 
@@ -91,22 +95,27 @@ func main() {
 	workCases, err := open_file("part1.txt")
 	currentPoint := DIAL_START
 	var allRotationValues []int
+	extraZeros := 0
 
 	if err == nil {
 
 		for i := 0; i < len(workCases); i++ {
+			var extraTurns int
 
 			fmt.Println((workCases[i]))
 
-			currentPoint = rotation(workCases[i], currentPoint)
+			currentPoint, extraTurns = rotation(workCases[i], currentPoint)
 			allRotationValues = append(allRotationValues, currentPoint)
 
-			fmt.Println("Dial is on ", currentPoint)
+			extraZeros += extraTurns
+
+			fmt.Println("Dial is on", currentPoint, "over 0", extraZeros)
 
 		}
 
 	}
 
 	fmt.Println("Part 1 result is ", part1(allRotationValues))
+	fmt.Println("Part 2 result is ", (part1(allRotationValues)+extraZeros)-part1(allRotationValues))
 
 }
